@@ -5,13 +5,9 @@
 package boot
 
 import (
-	"context"
 	"log"
+	"net"
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 
 	"golang.design/x/ssaplayground/src/config"
 	"golang.design/x/ssaplayground/src/route"
@@ -24,36 +20,33 @@ func init() {
 }
 
 func Run() {
-	server := &http.Server{
-		Handler: route.Register(),
-		Addr:    config.Get().Addr,
+
+	// terminated := make(chan bool, 1)
+
+	// go func() {
+	// 	quit := make(chan os.Signal, 1)
+	// 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+	// 	sig := <-quit
+
+	// 	log.Printf("service is stopped with signal: %v", sig)
+
+	// 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	// 	if err := server.Shutdown(ctx); err != nil {
+	// 		log.Printf("close ssaplayground with error: %v", err)
+	// 	}
+
+	// 	cancel()
+	// 	terminated <- true
+	// }()
+
+	listener, err := net.Listen("tcp", config.Get().Addr)
+	if err != nil {
+		panic(err)
 	}
+	hnd := route.Register()
+	addr := listener.Addr().(*net.TCPAddr)
+	log.Printf("welcome to ssaplayground service... http://%s:%d/gossa",
+		addr.IP, addr.Port)
 
-	terminated := make(chan bool, 1)
-
-	go func() {
-		quit := make(chan os.Signal, 1)
-		signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
-		sig := <-quit
-
-		log.Printf("service is stopped with signal: %v", sig)
-
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		if err := server.Shutdown(ctx); err != nil {
-			log.Printf("close ssaplayground with error: %v", err)
-		}
-
-		cancel()
-		terminated <- true
-	}()
-
-	log.Printf("welcome to ssaplayground service... http://%s/gossa", config.Get().Addr)
-	err := server.ListenAndServe()
-	if err != http.ErrServerClosed {
-		terminated <- true
-		log.Printf("launch with error: %v", err)
-	}
-
-	<-terminated
-	log.Printf("service has terminated successfully, good bye!")
+	panic(http.Serve(listener, hnd))
 }

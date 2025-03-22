@@ -7,7 +7,6 @@ package config
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 
@@ -47,7 +46,7 @@ Usage:
 		os.Exit(1)
 	}
 
-	y, err := ioutil.ReadFile(f)
+	y, err := os.ReadFile(f)
 	if err != nil {
 		log.Fatalf("fatal: fail to read configuration file: %v", err)
 	}

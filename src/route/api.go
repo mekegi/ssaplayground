@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
@@ -104,7 +103,7 @@ func BuildSSA(c *gin.Context) {
 		return
 	}
 
-	err = ioutil.WriteFile(buildFile, importedCode, os.ModePerm)
+	err = os.WriteFile(buildFile, importedCode, os.ModePerm)
 	if err != nil {
 		os.Remove(path)
 		out.Msg = fmt.Sprintf("cannot save your code, err: \n%v", err)
@@ -140,12 +139,12 @@ func BuildSSA(c *gin.Context) {
 /*
 According to spec there are two cases we need to handle:
 
-- Function declaration, in the form of 'func f() {...}' , see:
-	https://golang.org/ref/spec#Function_declarations
+  - Function declaration, in the form of 'func f() {...}' , see:
+    https://golang.org/ref/spec#Function_declarations
 
-- Function literal/anonymous function, in the form of
- 'myfunc := func() {...}' or 'go func() {...}', see:
-	https://golang.org/ref/spec#Function_literals
+  - Function literal/anonymous function, in the form of
+    'myfunc := func() {...}' or 'go func() {...}', see:
+    https://golang.org/ref/spec#Function_literals
 
 As users can use some tricks like raw string to bypass our check, we
 only do check conservatively, which means it is mainly used for
@@ -157,9 +156,11 @@ https://github.com/golang/go/blob/84162b88324aa7993fe4a8580a2b65c6a7055f88/src/c
 
 - func foo()	// most common case
 - glob..func<i>	// global function literal
-	+ glob..func<i>.<j>.<k>...		// inner anonymous function
+  - glob..func<i>.<j>.<k>...		// inner anonymous function
+
 - foo.func<i>	// anonymous function inside function 'foo'
-	+ foo.func<i>.<j>.<k>...
+  - foo.func<i>.<j>.<k>...
+
 - (*T).foo()	// method expression with explicit receiver, see
 https://golang.org/ref/spec#Method_expressions
 

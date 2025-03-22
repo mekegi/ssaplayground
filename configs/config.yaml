@@ -3,6 +3,6 @@
 # by a GPLv3 license that can be found in the LICENSE file.
 
 ---
-addr: localhost:80
+addr: localhost:0 # any unused port
 mode: debug
 static: public
